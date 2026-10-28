@@ -1,0 +1,67 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 9% 98%;
+    --foreground: 24 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 10% 10%;
+    --primary: 150 45% 22%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 5% 96%;
+    --secondary-foreground: 24 10% 12%;
+    --muted: 60 5% 96%;
+    --muted-foreground: 25 5% 42%;
+    --accent: 140 30% 95%;
+    --accent-foreground: 150 45% 18%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 20 6% 90%;
+    --input: 20 6% 86%;
+    --ring: 150 45% 30%;
+    --radius: 0.65rem;
+
+    --sidebar: 152 44% 10%;
+    --sidebar-foreground: 140 20% 92%;
+    --sidebar-muted: 145 15% 62%;
+    --sidebar-accent: 151 35% 17%;
+    --sidebar-border: 151 30% 16%;
+  }
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.leaflet-container {
+  font: inherit;
+}
+.leaflet-control-layers,
+.leaflet-bar {
+  border-radius: 0.5rem !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08) !important;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}
