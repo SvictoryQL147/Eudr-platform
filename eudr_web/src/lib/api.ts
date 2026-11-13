@@ -1,4 +1,9 @@
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+// Where the backend lives. Unset in production = same domain (Vercel
+// services route /api/* to the FastAPI backend). Unset in development =
+// the local backend on port 8000. "/" also means same domain.
+export const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === "production" ? "" : "http://127.0.0.1:8000")
+).replace(/\/$/, "");
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "EUDR Ready";
 
 const TOKEN_KEY = "eudr.token";
@@ -56,7 +61,7 @@ export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T
   try {
     res = await fetch(`${API_URL}${path}`, { method: opts.method || (body ? "POST" : "GET"), headers, body });
   } catch {
-    throw new ApiError(0, `Can't reach the server at ${API_URL}. Is the backend running?`);
+    throw new ApiError(0, `Can't reach the server${API_URL ? ` at ${API_URL}` : ""}. Is the backend running?`);
   }
   if (res.status === 401 && token) {
     setToken(null);

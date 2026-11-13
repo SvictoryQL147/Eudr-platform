@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     whisp_api_key: str | None = None
     whisp_base_url: str = "https://whisp.openforis.org"
     whisp_timeout_seconds: int = 900
+    # Run screening inside the request instead of as a background task.
+    # Needed on serverless hosts (Vercel), where work after the response
+    # isn't guaranteed to finish. Keep whisp_timeout_seconds below the
+    # function's maxDuration when this is on.
+    screening_run_inline: bool = False
     whisp_batch_size: int = 500
     # Optional ISO2 codes to add national datasets in Whisp, e.g. "ci,gh". Leave
     # empty unless Whisp lists national layers for the country.

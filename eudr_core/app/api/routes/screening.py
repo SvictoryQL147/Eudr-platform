@@ -105,7 +105,12 @@ def start_job(
     db.commit()
     db.refresh(job)
     if farms:
-        background.add_task(d.run_screening_job, str(job.id), None, None, commodity)
+        if settings.screening_run_inline:
+            d.run_screening_job(str(job.id), None, None, commodity)
+            db.expire_all()
+            job = db.get(models.ScreeningJob, job.id)
+        else:
+            background.add_task(d.run_screening_job, str(job.id), None, None, commodity)
     return _job_out(job)
 
 

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "eudr_core": {
+      "root": "eudr_core",
+      "framework": "fastapi",
+      "functions": {
+        "app/main.py": { "maxDuration": 300 }
+      }
+    },
+    "eudr_web": {
+      "root": "eudr_web",
+      "framework": "nextjs"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "eudr_core" } },
+    { "source": "/health", "destination": { "service": "eudr_core" } },
+    { "source": "/docs", "destination": { "service": "eudr_core" } },
+    { "source": "/openapi.json", "destination": { "service": "eudr_core" } },
+    { "source": "/(.*)", "destination": { "service": "eudr_web" } }
+  ]
+}
