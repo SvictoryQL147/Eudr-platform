@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { date, kg, shortId } from "@/lib/format";
 import type { Batch, CollectionEvent } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
 
 function CreateBatch({ open, onClose, onSaved }: { open: boolean; onClose: () => void; onSaved: () => void }) {
   const available = useApi<CollectionEvent[]>("/api/v1/collection-events?available_only=true");
@@ -146,9 +147,9 @@ function BatchesInner() {
         title="Batches"
         subtitle="Lots made from weighed collections. Each batch traces back to its farms."
         actions={
-          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
+          <Can perm="supply_chain.write"><Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
             Create batch
-          </Button>
+          </Button></Can>
         }
       />
       <Card>

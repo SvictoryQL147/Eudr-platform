@@ -10,6 +10,9 @@ import { Badge, Button, Card, CardHeader, ErrorBox, LinkButton, Loading, PageHea
 import { ha, kg } from "@/lib/format";
 import type { DocumentItem, Farm, Farmer } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
+import { History as HistoryIcon } from "lucide-react";
+import { RecordHistory } from "@/components/Activity";
 
 export default function FarmerDetail({ params }: { params: { id: string } }) {
   const farmer = useApi<Farmer>(`/api/v1/farmers/${params.id}`);
@@ -30,12 +33,12 @@ export default function FarmerDetail({ params }: { params: { id: string } }) {
         subtitle={[f.community, f.state].filter(Boolean).join(", ") || "Location not recorded"}
         actions={
           <>
-            <Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditing(true)}>
+            <Can perm="records.write"><Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditing(true)}>
               Edit
             </Button>
             <LinkButton href={`/farms?new=1&farmer=${f.id}`} variant="primary" icon={<Plus className="h-4 w-4" />}>
               Add farm
-            </LinkButton>
+            </LinkButton></Can>
           </>
         }
       />
@@ -95,6 +98,12 @@ export default function FarmerDetail({ params }: { params: { id: string } }) {
           <DocumentList docs={docs.data} empty="No documents for this farmer yet." />
         </Card>
       </div>
+      <Card className="mt-6">
+        <CardHeader title="History" subtitle="Every change to this record, who made it and when" icon={<HistoryIcon className="h-4 w-4" />} />
+        <div className="p-5">
+          <RecordHistory entityId={f.id} />
+        </div>
+      </Card>
       {editing && <FarmerForm open farmer={f} onClose={() => setEditing(false)} onSaved={() => farmer.reload()} />}
     </>
   );

@@ -10,6 +10,7 @@ import { useApi } from "@/lib/useApi";
 import { Badge, Button, Modal } from "./kit";
 import { Progress } from "./ui/progress";
 import { Tip } from "./ui/tooltip";
+import { useAuth } from "@/lib/auth";
 
 export const RISK_LABEL: Record<Risk, string> = {
   low: "Low risk",
@@ -102,6 +103,7 @@ export function ScreenButton({
   const [setupOpen, setSetupOpen] = useState(false);
   const job = useApi<ScreeningJob>(jobId ? `/api/v1/screening/jobs/${jobId}` : null, { refetchInterval: jobId ? 2000 : false });
   const j = job.data;
+  const { can } = useAuth();
 
   useEffect(() => {
     if (!j || !jobId) return;
@@ -141,6 +143,7 @@ export function ScreenButton({
   const running = !!jobId;
   const pct = j && j.farm_count ? Math.round((100 * j.done_count) / j.farm_count) : 5;
 
+  if (!can("compliance.run")) return null;
   return (
     <>
       <div className="inline-flex flex-col gap-1.5">

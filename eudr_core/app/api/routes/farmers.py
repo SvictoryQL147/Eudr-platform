@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.database import get_db
 from app.models import core as models
 from app.schemas.core import FarmerCreate, FarmerListItem, FarmerOut, FarmerUpdate
 
-router = APIRouter(prefix="/api/v1/farmers", tags=["farmers"])
+router = APIRouter(prefix="/api/v1/farmers", tags=["farmers"], dependencies=[writes_require("records.write")])
 
 
 def _list_item(f: models.Farmer) -> FarmerListItem:

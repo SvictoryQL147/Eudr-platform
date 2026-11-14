@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { date, dateTime, ha, kg, riskTone } from "@/lib/format";
 import type { CollectionEvent, Farm, Farmer, Harvest, ScreeningHistoryItem } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
+import { History as HistoryIcon } from "lucide-react";
+import { RecordHistory } from "@/components/Activity";
 
 const RISK_EXPLAIN = {
   low: "Satellite evidence shows no forest clearing on this plot after 2020 (or it was already farmland). Fine for EUDR.",
@@ -54,9 +57,9 @@ export default function FarmDetail({ params }: { params: { id: string } }) {
           )
         }
         actions={
-          <Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditing(true)}>
+          <Can perm="records.write"><Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditing(true)}>
             {f.has_geolocation ? "Edit boundary" : "Map boundary"}
-          </Button>
+          </Button></Can>
         }
       />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -188,6 +191,12 @@ export default function FarmDetail({ params }: { params: { id: string } }) {
         <ShieldCheck className="h-3.5 w-3.5" /> Redrawing the boundary clears its deforestation result until it&apos;s screened again.
       </p>
 
+      <Card className="mt-6">
+        <CardHeader title="History" subtitle="Every change to this record, who made it and when" icon={<HistoryIcon className="h-4 w-4" />} />
+        <div className="p-5">
+          <RecordHistory entityId={f.id} />
+        </div>
+      </Card>
       {editing && <FarmForm open farm={f} farmers={farmers.data || []} onClose={() => setEditing(false)} onSaved={() => undefined} />}
       {addHarvest && <HarvestForm open farmId={f.id} onClose={() => setAddHarvest(false)} onSaved={() => undefined} />}
       {addCollection && <CollectionForm open farmId={f.id} onClose={() => setAddCollection(false)} onSaved={() => undefined} />}

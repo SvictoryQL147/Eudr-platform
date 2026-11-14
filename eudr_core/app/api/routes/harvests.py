@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session, selectinload
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.database import get_db
 from app.models import core as models
@@ -13,8 +14,8 @@ from app.schemas.core import (
     HarvestOut,
 )
 
-harvests_router = APIRouter(prefix="/api/v1/harvests", tags=["harvests"])
-collections_router = APIRouter(prefix="/api/v1/collection-events", tags=["collection-events"])
+harvests_router = APIRouter(prefix="/api/v1/harvests", tags=["harvests"], dependencies=[writes_require("records.write")])
+collections_router = APIRouter(prefix="/api/v1/collection-events", tags=["collection-events"], dependencies=[writes_require("records.write")])
 
 
 @harvests_router.get("", response_model=list[HarvestListItem])

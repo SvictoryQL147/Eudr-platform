@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ha, kg, riskTone } from "@/lib/format";
 import type { Farm, Farmer, ScreeningStatus } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
 
 type Filter = "all" | "unmapped" | "unscreened" | "flagged";
 
@@ -122,10 +123,10 @@ function FarmsInner() {
         badge={demo ? <Badge tone="violet">Screening: DEMO mode</Badge> : undefined}
         actions={
           <>
-            <ScreenButton label={counts.unscreened ? `Screen ${counts.unscreened} unscreened` : "Screen farms"} />
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAdding(true)}>
+            <Can perm="compliance.run"><ScreenButton label={counts.unscreened ? `Screen ${counts.unscreened} unscreened` : "Screen farms"} /></Can>
+            <Can perm="records.write"><Button icon={<Plus className="h-4 w-4" />} onClick={() => setAdding(true)}>
               Add farm
-            </Button>
+            </Button></Can>
           </>
         }
       />

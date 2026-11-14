@@ -2,13 +2,14 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models import core as models
 from app.services import deforestation as d
 
-router = APIRouter(prefix="/api/v1/screening", tags=["deforestation screening"])
+router = APIRouter(prefix="/api/v1/screening", tags=["deforestation screening"], dependencies=[writes_require("compliance.run")])
 
 
 class ScreeningRequest(BaseModel):

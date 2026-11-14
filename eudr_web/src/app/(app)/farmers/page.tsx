@@ -10,6 +10,7 @@ import { Badge, Button, Card, Empty, ErrorBox, Loading, PageHeader } from "@/com
 import { ha } from "@/lib/format";
 import type { Farmer } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
 
 function FarmersInner() {
   const { data, error, loading } = useApi<Farmer[]>("/api/v1/farmers");
@@ -82,9 +83,9 @@ function FarmersInner() {
         title="Farmers"
         subtitle="Everyone who supplies you, with their ID and farms"
         actions={
-          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAdding(true)}>
+          <Can perm="records.write"><Button icon={<Plus className="h-4 w-4" />} onClick={() => setAdding(true)}>
             Register farmer
-          </Button>
+          </Button></Can>
         }
       />
       {error && <ErrorBox message={error} />}

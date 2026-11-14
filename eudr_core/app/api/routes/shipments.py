@@ -3,13 +3,14 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session, selectinload
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.database import get_db
 from app.models import core as models
 from app.schemas.core import ShipmentCreate, ShipmentListItem, ShipmentOut, ShipmentUpdate
 from app.services.evidence_pack import build_evidence_pack, build_geojson
 
-router = APIRouter(prefix="/api/v1/shipments", tags=["shipments"])
+router = APIRouter(prefix="/api/v1/shipments", tags=["shipments"], dependencies=[writes_require("supply_chain.write")])
 
 
 def _latest(shipment: models.Shipment):

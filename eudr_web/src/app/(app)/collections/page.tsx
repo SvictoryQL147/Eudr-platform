@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { date, dateTime, kg } from "@/lib/format";
 import type { CollectionEvent, Harvest } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
 
 const farmLink = (id: string, name: string | null) => (
   <Link href={`/farms/${id}`} onClick={(e) => e.stopPropagation()} className="font-medium hover:text-primary">
@@ -54,12 +55,12 @@ export default function CollectionsPage() {
         subtitle="Harvests are what farmers report; collections are what your agents weigh. The two are checked against each other."
         actions={
           <>
-            <Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setAddH(true)}>
+            <Can perm="records.write"><Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setAddH(true)}>
               Record harvest
             </Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddC(true)}>
               Record collection
-            </Button>
+            </Button></Can>
           </>
         }
       />

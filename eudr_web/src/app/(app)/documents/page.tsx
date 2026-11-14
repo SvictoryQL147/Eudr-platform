@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { type ColMeta, type ColumnDef, DataTable, SortHeader } from "@/components/DataTable";
 import { Badge, Button, Card, Empty, Loading, PageHeader } from "@/components/kit";
-import { downloadFile } from "@/lib/api";
+import { downloadDocument } from "@/lib/api";
 import { DOCUMENT_LABELS, date, shortId } from "@/lib/format";
 import type { DocumentItem } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
@@ -47,7 +47,7 @@ export default function DocumentsPage() {
         header: "",
         cell: ({ row: { original: d } }) =>
           d.has_file && (
-            <Button size="sm" variant="ghost" icon={<Download className="h-4 w-4" />} onClick={() => downloadFile(`/api/v1/documents/${d.id}/file`, d.original_filename || "document")}>
+            <Button size="sm" variant="ghost" icon={<Download className="h-4 w-4" />} onClick={() => downloadDocument(d.id, d.original_filename || "document")}>
               Download
             </Button>
           ),

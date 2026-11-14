@@ -77,7 +77,7 @@ export function Countdown({ compact }: { compact?: boolean }) {
 const LINKS = [
   ["How it works", "#how"],
   ["Screening", "#screening"],
-  ["Evidence pack", "#evidence"],
+  ["Platform", "#platform"],
   ["Pilot", "#pilot"],
   ["FAQ", "#faq"],
 ];
@@ -93,7 +93,7 @@ export function Nav() {
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={cn("fixed inset-x-0 top-0 z-50 transition-all duration-300", scrolled ? "border-b border-white/10 bg-[#06150f]/80 backdrop-blur-xl" : "bg-transparent")}>
+    <header className={cn("fixed inset-x-0 top-0 z-50 transition-all duration-300", scrolled ? "border-b border-white/[0.08] bg-[#030b07]/75 backdrop-blur-xl" : "bg-transparent")}>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5 text-white">
           <Logo />
@@ -179,16 +179,24 @@ export function CountUp({ to, className }: { to: number; className?: string }) {
   );
 }
 
-export function FaqItem({ q, children }: { q: string; children: React.ReactNode }) {
+export function FaqItem({ q, children, dark }: { q: string; children: React.ReactNode; dark?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-stone-200">
+    <div className={dark ? "border-b border-white/10" : "border-b border-stone-200"}>
       <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-6 py-5 text-left" aria-expanded={open}>
-        <span className="text-base font-medium text-stone-900">{q}</span>
-        <span className={cn("flex h-7 w-7 flex-none items-center justify-center rounded-full border border-stone-300 text-stone-500 transition-transform", open && "rotate-45")}>+</span>
+        <span className={cn("text-base font-medium", dark ? "text-white" : "text-stone-900")}>{q}</span>
+        <span
+          className={cn(
+            "flex h-7 w-7 flex-none items-center justify-center rounded-full border transition-transform",
+            dark ? "border-white/20 text-white/60" : "border-stone-300 text-stone-500",
+            open && "rotate-45",
+          )}
+        >
+          +
+        </span>
       </button>
       <div className={cn("grid transition-all duration-300", open ? "grid-rows-[1fr] pb-5 opacity-100" : "grid-rows-[0fr] opacity-0")}>
-        <div className="overflow-hidden text-[15px] leading-relaxed text-stone-600">{children}</div>
+        <div className={cn("overflow-hidden text-[15px] leading-relaxed", dark ? "text-white/60" : "text-stone-600")}>{children}</div>
       </div>
     </div>
   );

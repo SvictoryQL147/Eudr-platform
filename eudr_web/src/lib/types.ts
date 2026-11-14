@@ -8,9 +8,24 @@ export interface User {
   role: Role;
   is_active: boolean;
   created_at?: string;
+  last_login_at?: string | null;
+  invite_pending?: boolean;
+  has_login?: boolean;
 }
 export interface Organization { id: string; name: string }
-export interface Session { access_token: string; user: User; organization: Organization }
+export type Permission = "records.write" | "supply_chain.write" | "documents.write" | "compliance.run" | "users.manage" | "audit.view";
+export interface Session { access_token?: string; user: User; organization: Organization; permissions: Permission[] }
+export interface AuditEvent {
+  id: string;
+  user_name: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  summary: string;
+  changes: Record<string, { from: unknown; to: unknown }> | null;
+  created_at: string;
+}
+export interface InviteResult { user: User; email_sent: boolean; invite_url: string | null }
 
 export interface Farmer {
   id: string;

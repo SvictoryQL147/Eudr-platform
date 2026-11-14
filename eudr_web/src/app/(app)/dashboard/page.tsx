@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { date, ha, kg, riskTone, tonnes } from "@/lib/format";
 import type { DashboardSummary, Farm, ScreeningStatus, Shipment } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { useAuth } from "@/lib/auth";
 
 function RiskBar({ d }: { d: DashboardSummary["deforestation"] }) {
   const total = d.low + d.more_info_needed + d.high + d.not_screened;
@@ -39,7 +40,13 @@ function RiskBar({ d }: { d: DashboardSummary["deforestation"] }) {
   );
 }
 
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+}
+
 export default function DashboardPage() {
+  const { user } = useAuth();
   const summary = useApi<DashboardSummary>("/api/v1/dashboard/summary");
   const shipments = useApi<Shipment[]>("/api/v1/shipments");
   const farms = useApi<Farm[]>("/api/v1/farms?mapped=true");
@@ -63,20 +70,31 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Overview" subtitle={s.organization_name} badge={screening.data?.demo ? <Badge tone="violet">Screening: DEMO mode</Badge> : undefined} />
-
-      <Card className="mb-6 overflow-hidden">
-        <div className="flex flex-wrap items-center gap-4 bg-gradient-to-r from-brand-900 to-brand-700 px-5 py-4 text-white">
-          <CalendarClock className="h-6 w-6 flex-none text-emerald-300" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-emerald-100">EUDR applies to large and medium EU buyers on {date(s.eudr_deadline)}</p>
-            <p className="text-xl font-semibold">{s.days_to_deadline > 0 ? `${s.days_to_deadline} days to go` : "In force now"}</p>
+      <section className="relative mb-6 overflow-hidden rounded-2xl bg-[#06261b] px-5 py-6 text-white shadow-lg animate-fade-up sm:px-7 sm:py-7">
+        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(40rem_22rem_at_0%_0%,rgba(31,191,106,.38),transparent_60%),radial-gradient(30rem_20rem_at_100%_120%,rgba(199,245,166,.16),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.7)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:36px_36px]" />
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-sm text-emerald-200/80">
+              {greeting()}, {user?.name.split(" ")[0]}
+            </p>
+            <h1 className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-3xl">{s.organization_name}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full bg-white/10 px-2.5 py-1 ring-1 ring-white/10">
+                {doneCount} of {steps.length} setup steps done
+              </span>
+              {screening.data?.demo && <span className="rounded-full bg-violet-400/20 px-2.5 py-1 text-violet-100 ring-1 ring-violet-300/30">Screening: DEMO mode</span>}
+            </div>
           </div>
-          <div className="w-full max-w-xs">
-            <Progress value={deadlinePct} className="bg-white/15" indicatorClassName="bg-emerald-300" />
+          <div className="w-full max-w-xs rounded-xl bg-white/[0.07] p-4 ring-1 ring-white/10 backdrop-blur">
+            <div className="flex items-center gap-2 text-xs text-emerald-100/80">
+              <CalendarClock className="h-4 w-4 text-emerald-300" /> EUDR applies from {date(s.eudr_deadline)}
+            </div>
+            <p className="mt-1 font-display text-2xl font-bold tabular-nums">{s.days_to_deadline > 0 ? `${s.days_to_deadline} days to go` : "In force now"}</p>
+            <Progress value={deadlinePct} className="mt-3 h-1.5 bg-white/15" indicatorClassName="bg-gradient-to-r from-emerald-300 to-lime-200" />
           </div>
         </div>
-      </Card>
+      </section>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Farmers" icon={<UsersRound />} value={s.farmers} sub={`${s.farms} farms registered`} />

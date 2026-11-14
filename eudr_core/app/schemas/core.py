@@ -34,6 +34,12 @@ class UserOut(BaseModel):
     role: str
     is_active: bool
     created_at: datetime | None = None
+    last_login_at: datetime | None = None
+    # Can sign in (has set a password). False for record-only field agents
+    # and for people who haven't accepted their invitation yet.
+    has_login: bool = True
+    # An unused, unexpired invitation is waiting for this person.
+    invite_pending: bool = False
 
     @field_validator("role", mode="before")
     @classmethod
@@ -50,15 +56,84 @@ class OrganizationOut(BaseModel):
 
 
 class TokenOut(BaseModel):
+    # The dashboard ignores this and uses the httpOnly cookie; it's here
+    # for API clients and scripts that prefer a Bearer header.
     access_token: str
     token_type: str = "bearer"
     user: UserOut
     organization: OrganizationOut
+    permissions: list[str] = []
 
 
 class MeOut(BaseModel):
     user: UserOut
     organization: OrganizationOut
+    permissions: list[str] = []
+
+
+class ForgotPasswordIn(BaseModel):
+    email: str
+
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    password: str = Field(max_length=128)
+
+
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str = Field(max_length=128)
+
+
+class AcceptInviteIn(BaseModel):
+    token: str
+    password: str = Field(max_length=128)
+
+
+class InviteInfoOut(BaseModel):
+    email: str
+    name: str
+    organization_name: str
+    role: str
+
+
+class InviteIn(BaseModel):
+    name: str = Field(min_length=2, max_length=255)
+    email: str
+    role: str = "exporter_staff"
+
+    @field_validator("email")
+    @classmethod
+    def _lower(cls, v: str) -> str:
+        v = v.strip().lower()
+        if "@" not in v or "." not in v.split("@")[-1]:
+            raise ValueError("Enter a valid email address")
+        return v
+
+
+class InviteOut(BaseModel):
+    user: UserOut
+    email_sent: bool
+    # Only filled when the email couldn't be sent (e.g. email not set up
+    # yet), so the admin can pass the link on themselves.
+    invite_url: str | None = None
+
+
+class UserUpdate(BaseModel):
+    role: str | None = None
+    is_active: bool | None = None
+
+
+class AuditEventOut(BaseModel):
+    id: str
+    user_name: str | None
+    action: str
+    entity_type: str | None
+    entity_id: str | None
+    summary: str
+    changes: dict | None = None
+    created_at: datetime
+    model_config = {"from_attributes": True}
 
 
 class UserCreate(BaseModel):

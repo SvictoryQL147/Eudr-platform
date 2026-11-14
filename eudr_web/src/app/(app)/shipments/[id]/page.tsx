@@ -13,6 +13,9 @@ import { api, downloadFile, downloadJson } from "@/lib/api";
 import { SEVERITY_ORDER, dateTime, entityLink, ha, kg, riskTone, shortId } from "@/lib/format";
 import type { AssessmentSummary, Batch, DocumentItem, EvidencePack, Readiness, Shipment } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
+import { History as HistoryIcon } from "lucide-react";
+import { RecordHistory } from "@/components/Activity";
 
 function AddBatches({ shipment, onClose, onSaved }: { shipment: Shipment; onClose: () => void; onSaved: () => void }) {
   const batches = useApi<Batch[]>("/api/v1/batches");
@@ -132,9 +135,9 @@ export default function ShipmentDetail({ params }: { params: { id: string } }) {
             <Button variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={() => window.open(`/shipments/${id}/evidence`, "_blank")}>
               Evidence pack
             </Button>
-            <Button icon={<RefreshCw className="h-4 w-4" />} loading={assessing} onClick={assess}>
+            <Can perm="compliance.run"><Button icon={<RefreshCw className="h-4 w-4" />} loading={assessing} onClick={assess}>
               {r ? "Re-check readiness" : "Check readiness"}
-            </Button>
+            </Button></Can>
           </>
         }
       />
@@ -393,6 +396,12 @@ export default function ShipmentDetail({ params }: { params: { id: string } }) {
           </Table>
         </Card>
       )}
+      <Card className="mt-6">
+        <CardHeader title="History" subtitle="Every change to this record, who made it and when" icon={<HistoryIcon className="h-4 w-4" />} />
+        <div className="p-5">
+          <RecordHistory entityId={id} />
+        </div>
+      </Card>
       {adding && <AddBatches shipment={s} onClose={() => setAdding(false)} onSaved={refreshAll} />}
     </>
   );

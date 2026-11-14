@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.config import Settings, get_settings
 from app.database import get_db
@@ -9,7 +10,7 @@ from app.schemas.core import AssessmentSummary, FindingOut, ReadinessOut
 from app.services.compliance_engine import build_context_from_db, run_all_rules
 from app.services.readiness import compute_readiness
 
-router = APIRouter(prefix="/api/v1/shipments", tags=["compliance"])
+router = APIRouter(prefix="/api/v1/shipments", tags=["compliance"], dependencies=[writes_require("compliance.run")])
 
 
 @router.post("/{shipment_id}/assess", response_model=ReadinessOut, status_code=status.HTTP_201_CREATED)

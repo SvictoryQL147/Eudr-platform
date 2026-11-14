@@ -1,0 +1,4 @@
+# Everything the app needs, plus test tools. Use this on your computer and in CI.
+-r requirements.txt
+pytest==8.3.3
+moto[s3]==5.0.16

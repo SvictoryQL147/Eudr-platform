@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { Download, FileText, Upload } from "lucide-react";
 import { useState } from "react";
-import { api, downloadFile } from "@/lib/api";
+import { api, downloadDocument } from "@/lib/api";
 import { DOCUMENT_LABELS, date } from "@/lib/format";
 import type { DocumentItem, DocumentType, LinkedType } from "@/lib/types";
 import { Badge, Button, ErrorBox, Field, Input, Modal, Select } from "./kit";
@@ -119,7 +119,7 @@ export function DocumentList({ docs, empty = "No documents yet." }: { docs: Docu
                 variant="ghost"
                 size="sm"
                 icon={<Download className="h-4 w-4" />}
-                onClick={() => downloadFile(`/api/v1/documents/${d.id}/file`, d.original_filename || "document")}
+                onClick={() => downloadDocument(d.id, d.original_filename || "document")}
               >
                 <span className="sr-only sm:not-sr-only">Download</span>
               </Button>

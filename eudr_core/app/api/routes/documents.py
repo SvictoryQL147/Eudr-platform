@@ -1,20 +1,23 @@
+import logging
 import re
 import uuid
 from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.config import Settings, get_settings
 from app.database import get_db
 from app.models import core as models
 from app.schemas.core import DocumentCreate, DocumentOut
 from app.services.ocr import get_ocr_service
+from app.services.storage import StorageError, get_storage, storage_for_key
 
-router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
+router = APIRouter(prefix="/api/v1/documents", tags=["documents"], dependencies=[writes_require("documents.write")])
 
 _ALLOWED_TYPES = {
     "application/pdf": ".pdf",
@@ -31,7 +34,7 @@ _LINK_MODELS = {
 
 def _out(d: models.Document) -> DocumentOut:
     out = DocumentOut.model_validate(d)
-    out.has_file = bool(d.object_key and d.object_key.startswith("local:"))
+    out.has_file = bool(d.object_key and d.object_key.split(":", 1)[0] in ("local", "s3"))
     return out
 
 
@@ -104,7 +107,8 @@ async def upload_document(
     settings: Settings = Depends(get_settings),
 ):
     """Uploads a PDF or photo (certificate, ID, receipt) and links it to a
-    farmer, batch or shipment. Stored on local disk under storage_dir."""
+    farmer, batch or shipment. Stored in permanent object storage (S3/R2)
+    when storage_backend=s3, else on local disk under storage_dir."""
     doc_type, link_type = _parse_enums(document_type, linked_to_type)
     _check_link(db, link_type, linked_to_id, user)
 
@@ -119,16 +123,22 @@ async def upload_document(
 
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", file.filename or "document")[:120]
     rel = Path(str(user.organization_id)) / f"{uuid.uuid4().hex}{_ALLOWED_TYPES[content_type]}"
-    dest = Path(settings.storage_dir) / rel
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(data)
+    # Check the file really is what it claims (a renamed .exe isn't a PDF).
+    magic = {".pdf": (b"%PDF",), ".jpg": (b"\xff\xd8\xff",), ".png": (b"\x89PNG",), ".webp": (b"RIFF",)}
+    if not data.startswith(magic[_ALLOWED_TYPES[content_type]]):
+        raise HTTPException(status_code=415, detail="The file's contents don't match its type")
+    try:
+        object_key = get_storage(settings).put(rel.as_posix(), data, content_type)
+    except Exception as exc:
+        logging.getLogger("ala.storage").exception("Document upload to storage failed")
+        raise HTTPException(status_code=503, detail="File storage is unavailable. Try again shortly.") from exc
 
     document = models.Document(
         organization_id=user.organization_id,
         document_type=doc_type,
         linked_to_type=link_type,
         linked_to_id=linked_to_id,
-        object_key=f"local:{rel.as_posix()}",
+        object_key=object_key,
         original_filename=safe_name,
         content_type=content_type,
         size_bytes=len(data),
@@ -142,6 +152,13 @@ async def upload_document(
     return _out(document)
 
 
+def _stored(document: models.Document, settings: Settings):
+    found = storage_for_key(document.object_key, settings)
+    if found is None:
+        raise HTTPException(status_code=404, detail="This document has no uploaded file")
+    return found
+
+
 @router.get("/{document_id}/file")
 def download_document(
     document_id: str,
@@ -150,10 +167,29 @@ def download_document(
     settings: Settings = Depends(get_settings),
 ):
     document = get_owned(db, models.Document, document_id, user, "Document")
-    if not document.object_key.startswith("local:"):
-        raise HTTPException(status_code=404, detail="This document has no uploaded file")
-    root = Path(settings.storage_dir).resolve()
-    path = (root / document.object_key[len("local:"):]).resolve()
-    if root not in path.parents or not path.is_file():
+    storage, key = _stored(document, settings)
+    try:
+        data = storage.get(key)
+    except StorageError:
         raise HTTPException(status_code=404, detail="File missing from storage")
-    return FileResponse(path, media_type=document.content_type, filename=document.original_filename or path.name)
+    filename = (document.original_filename or Path(key).name).replace('"', "")
+    return Response(
+        data,
+        media_type=document.content_type or "application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"', "Cache-Control": "private, no-store"},
+    )
+
+
+@router.get("/{document_id}/link")
+def document_link(
+    document_id: str,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """A 60-second signed download link when files live in S3/R2 (large
+    files then skip the API). `url` is null for local storage: use /file."""
+    document = get_owned(db, models.Document, document_id, user, "Document")
+    storage, key = _stored(document, settings)
+    filename = document.original_filename or Path(key).name
+    return {"url": storage.link(key, filename, document.content_type or "application/octet-stream"), "filename": filename}

@@ -1,11 +1,11 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Boxes, ChevronsUpDown, FileText, Gauge, Leaf, LogOut, Map, Menu, Scale, Search, Ship, Users, UsersRound } from "lucide-react";
+import { Boxes, ChevronsUpDown, FileText, Gauge, History, LogOut, Map, Menu, Scale, Search, Ship, UserRound, Users, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { APP_NAME } from "@/lib/api";
+import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,13 @@ export const NAV = [
       { href: "/documents", label: "Documents", icon: FileText },
     ],
   },
-  { group: "Organisation", items: [{ href: "/team", label: "Team", icon: Users }] },
+  {
+    group: "Organisation",
+    items: [
+      { href: "/team", label: "Team", icon: Users },
+      { href: "/activity", label: "Activity", icon: History },
+    ],
+  },
 ];
 
 function initials(name?: string | null) {
@@ -76,15 +82,9 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 function Brand() {
   return (
-    <div className="flex items-center gap-2.5 px-2">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-700 text-white shadow-inner">
-        <Leaf className="h-4 w-4" />
-      </span>
-      <div className="leading-tight">
-        <p className="text-sm font-semibold text-white">{APP_NAME}</p>
-        <p className="text-[11px] text-sidebar-muted">EUDR compliance</p>
-      </div>
-    </div>
+    <Link href="/dashboard" className="block px-2">
+      <Logo size={30} tone="light" sub="EUDR compliance" />
+    </Link>
   );
 }
 
@@ -107,6 +107,11 @@ function UserMenu() {
           <span className="block font-normal">{user ? ROLE_LABELS[user.role] : ""}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/account">
+            <UserRound /> Your account
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/team">
             <Users /> Team

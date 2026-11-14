@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned, get_owned_via_farm
 from app.database import get_db
 from app.models import core as models
 from app.schemas.core import BatchCreate, BatchInputDetail, BatchListItem, BatchOut
 
-router = APIRouter(prefix="/api/v1/batches", tags=["batches"])
+router = APIRouter(prefix="/api/v1/batches", tags=["batches"], dependencies=[writes_require("supply_chain.write")])
 
 
 def _batch_item(batch: models.Batch) -> BatchListItem:

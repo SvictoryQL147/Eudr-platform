@@ -6,13 +6,14 @@ from shapely.geometry import Polygon
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.serializers import farm_detail
+from app.permissions import writes_require
 from app.auth import get_current_user, get_owned
 from app.database import get_db
 from app.models import core as models
 from app.schemas.core import FarmCreate, FarmDetail, FarmOut, FarmUpdate
 from app.services.deforestation import latest_screenings
 
-router = APIRouter(prefix="/api/v1/farms", tags=["farms"])
+router = APIRouter(prefix="/api/v1/farms", tags=["farms"], dependencies=[writes_require("records.write")])
 
 # Rough meters-per-degree at the equator, refined by latitude — good
 # enough for smallholder plot sizes. For production accuracy, compute

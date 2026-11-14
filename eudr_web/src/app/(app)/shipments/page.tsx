@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { date, kg } from "@/lib/format";
 import type { Shipment } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
+import { Can } from "@/lib/auth";
 
 type F = "all" | "ready" | "blocked" | "unchecked";
 
@@ -83,9 +84,9 @@ function ShipmentsInner() {
         title="Shipments"
         subtitle="Each shipment gets a readiness score from 21 checks, including deforestation"
         actions={
-          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
+          <Can perm="supply_chain.write"><Button icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
             New shipment
-          </Button>
+          </Button></Can>
         }
       />
       <Card>

@@ -1,28 +1,12 @@
-// Where the backend lives. Unset in production = same domain (Vercel
-// services route /api/* to the FastAPI backend). Unset in development =
-// the local backend on port 8000. "/" also means same domain.
-export const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === "production" ? "" : "http://127.0.0.1:8000")
-).replace(/\/$/, "");
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "EUDR Ready";
+// Where the backend lives. Empty (the default) = same domain: on Vercel the
+// project routes /api/* to FastAPI, and in development next.config.mjs
+// proxies /api/* to the local backend on port 8000. Same domain matters:
+// the session is an httpOnly cookie, which only flows to our own origin.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Ala Trace";
 
-const TOKEN_KEY = "eudr.token";
-
-export function getToken(): string | null {
-  try {
-    return window.localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-export function setToken(token: string | null) {
-  try {
-    if (token) window.localStorage.setItem(TOKEN_KEY, token);
-    else window.localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* storage unavailable — session lasts until reload */
-  }
-}
+// Pages that work without signing in; a 401 there must not bounce to /login.
+const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/accept-invite"];
 
 export class ApiError extends Error {
   status: number;
@@ -48,9 +32,8 @@ function describe(detail: unknown): string {
 type Opts = { method?: string; body?: unknown; form?: FormData; raw?: boolean };
 
 export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T> {
-  const headers: Record<string, string> = {};
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  // Custom header = CSRF protection (browsers never add it to cross-site forms).
+  const headers: Record<string, string> = { "X-Requested-With": "ala" };
   let body: BodyInit | undefined;
   if (opts.form) body = opts.form;
   else if (opts.body !== undefined) {
@@ -59,14 +42,18 @@ export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T
   }
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { method: opts.method || (body ? "POST" : "GET"), headers, body });
+    res = await fetch(`${API_URL}${path}`, {
+      method: opts.method || (body ? "POST" : "GET"),
+      headers,
+      body,
+      credentials: "include",
+    });
   } catch {
-    throw new ApiError(0, `Can't reach the server${API_URL ? ` at ${API_URL}` : ""}. Is the backend running?`);
+    throw new ApiError(0, "Can't reach the server. Check your connection and try again.");
   }
-  if (res.status === 401 && token) {
-    setToken(null);
-    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-      window.location.href = "/login?expired=1";
+  if (res.status === 401 && typeof window !== "undefined" && !path.startsWith("/api/v1/auth/")) {
+    if (!PUBLIC_PATHS.includes(window.location.pathname)) {
+      window.location.href = `/login?expired=1&next=${encodeURIComponent(window.location.pathname)}`;
     }
   }
   if (!res.ok) {
@@ -86,6 +73,17 @@ export async function api<T = unknown>(path: string, opts: Opts = {}): Promise<T
   if (opts.raw) return res as unknown as T;
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+/** Downloads a stored document: a signed storage link when files live in
+ *  S3/R2, otherwise streamed through the API. */
+export async function downloadDocument(id: string, fallbackName: string) {
+  const link = await api<{ url: string | null; filename: string }>(`/api/v1/documents/${id}/link`);
+  if (link.url) {
+    window.location.assign(link.url);
+    return;
+  }
+  await downloadFile(`/api/v1/documents/${id}/file`, link.filename || fallbackName);
 }
 
 /** Fetches an authenticated file and hands it to the browser as a download. */

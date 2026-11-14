@@ -7,18 +7,58 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/eudr_core"
 
+    # Product name used in emails, page titles and the API docs.
+    app_name: str = "Ala Trace"
+    # Public address of the web app. Links in emails (password reset,
+    # invitations) point here. On Vercel set it to https://your-domain.
+    app_url: str = "http://localhost:3000"
+    environment: str = "development"  # shown in Sentry; "production" on Vercel
+
     # Auth. CHANGE jwt_secret in .env before deploying anywhere public.
     jwt_secret: str = "dev-only-change-me-in-env-0123456789abcdef"
     jwt_expires_minutes: int = 60 * 12
+    # Browser sessions live in an httpOnly cookie (JavaScript can't read it,
+    # so an injected script can't steal it). Secure flag is switched on
+    # automatically when app_url starts with https://.
+    cookie_name: str = "ala_session"
+
+    # Sign-in protection: after login_max_failures wrong passwords for one
+    # email inside login_window_minutes, that email is locked for the rest
+    # of the window. ip_max_failures caps guessing across many emails.
+    login_max_failures: int = 5
+    login_window_minutes: int = 15
+    ip_max_failures: int = 30
+    password_reset_max_per_hour: int = 3
+    password_min_length: int = 10
+
+    # Email (password resets, team invitations).
+    #   "console" = print emails to the server log (local development)
+    #   "resend"  = send through resend.com (needs resend_api_key)
+    email_backend: str = "console"
+    resend_api_key: str | None = None
+    email_from: str = "Ala Trace <onboarding@resend.dev>"
 
     # Comma-separated origins allowed to call the API from a browser
     # (the Next.js dashboard). Add your deployed web URL here.
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
-    # Uploaded documents are stored on local disk under this folder.
-    # Swap for S3/R2 object storage before running more than one server.
+    # Uploaded documents.
+    #   "local" = files on this machine's disk under storage_dir (development)
+    #   "s3"    = permanent object storage: Cloudflare R2, AWS S3 or any
+    #             S3-compatible service. Required on Vercel (its disk is wiped).
+    storage_backend: str = "local"
     storage_dir: str = "storage"
+    s3_bucket: str | None = None
+    s3_endpoint_url: str | None = None  # R2: https://<account_id>.r2.cloudflarestorage.com
+    s3_region: str = "auto"  # "auto" for R2, e.g. "eu-west-2" for AWS
+    s3_access_key_id: str | None = None
+    s3_secret_access_key: str | None = None
+    # Vercel functions accept request bodies up to ~4.5 MB; keep this at 4
+    # there. Locally 15 is fine.
     max_upload_mb: int = 15
+
+    # Error monitoring. Leave empty to switch Sentry off.
+    sentry_dsn: str | None = None
 
     # Deforestation screening (see services/deforestation.py).
     #   "whisp" = real screening via the FAO/Forest Data Partnership Whisp API

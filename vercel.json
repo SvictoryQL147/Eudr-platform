@@ -5,7 +5,9 @@
       "root": "eudr_core",
       "framework": "fastapi",
       "functions": {
-        "app/main.py": { "maxDuration": 300 }
+        "app/main.py": {
+          "maxDuration": 300
+        }
       }
     },
     "eudr_web": {
@@ -14,10 +16,41 @@
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": { "service": "eudr_core" } },
-    { "source": "/health", "destination": { "service": "eudr_core" } },
-    { "source": "/docs", "destination": { "service": "eudr_core" } },
-    { "source": "/openapi.json", "destination": { "service": "eudr_core" } },
-    { "source": "/(.*)", "destination": { "service": "eudr_web" } }
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "eudr_core"
+      }
+    },
+    {
+      "source": "/health",
+      "destination": {
+        "service": "eudr_core"
+      }
+    },
+    {
+      "source": "/health/ready",
+      "destination": {
+        "service": "eudr_core"
+      }
+    },
+    {
+      "source": "/docs",
+      "destination": {
+        "service": "eudr_core"
+      }
+    },
+    {
+      "source": "/openapi.json",
+      "destination": {
+        "service": "eudr_core"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "eudr_web"
+      }
+    }
   ]
 }
